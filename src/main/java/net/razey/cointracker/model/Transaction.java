@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 @Setter
 public class Transaction {
 
+    //Default to current DateTime
     DateTime dateTime;
 
     Currency currencyPurchased;
@@ -19,5 +20,7 @@ public class Transaction {
 
     Currency currentPriceCurrency;
     Float currentPrice;
+
+    String notes;
 
 }
