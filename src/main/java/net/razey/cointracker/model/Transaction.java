@@ -1,26 +1,24 @@
 package net.razey.cointracker.model;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
-import net.razey.cointracker.enums.Currency;
+import lombok.ToString;
 import org.joda.time.DateTime;
 
 @Getter
-@Setter
+@Builder
+@ToString
 public class Transaction {
 
-    //Default to current DateTime
-    DateTime dateTime;
+    @Builder.Default
+    private DateTime dateTime = DateTime.now();
 
-    Currency currencyPurchased;
-    Float purchasedQuantity;
+    private Money purchased;
+    private Money sold;
+    private Money snapshotPrice;
 
-    Currency currencySold;
-    Float soldQuantity;
+    private String exchange;
 
-    Currency currentPriceCurrency;
-    Float currentPrice;
-
-    String notes;
+    private String notes;
 
 }
