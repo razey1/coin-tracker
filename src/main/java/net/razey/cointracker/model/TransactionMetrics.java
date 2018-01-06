@@ -6,70 +6,86 @@ import net.razey.cointracker.enums.Currency;
 
 import java.math.BigDecimal;
 
+//Ugh.
 @Getter
 @ToString
 public class TransactionMetrics {
 
-    Double usdEquivalentPerCoin;
-    Double btcEquivalentPerCoin;
+    Double usdEquivalentPerPurchasedCoin;
+    Double btcEquivalentPerPurchasedCoin;
     Double totalUsdPaid;
     Double totalBtcPaid;
     Double percentProfit;
     Double usdProfit;
 
     public TransactionMetrics(Transaction transaction) {
-        this.btcEquivalentPerCoin = calculateEquivalentPerCoin(transaction, Currency.BTC);
-        this.usdEquivalentPerCoin = calculateEquivalentPerCoin(transaction, Currency.USD);
-        this.totalBtcPaid = calculateTotalCurrencyPaid(transaction, Currency.BTC);
-        this.totalUsdPaid = calculateTotalCurrencyPaid(transaction, Currency.USD);
+        this.btcEquivalentPerPurchasedCoin = calculateBtcEquivalentPerCoin(transaction);
+        this.usdEquivalentPerPurchasedCoin = calculateUsdEquivalentPerCoin(transaction);
+        this.totalBtcPaid = calculateTotalBtcPaid(transaction);
+        this.totalUsdPaid = calculateTotalUsdPaid(transaction);
         this.percentProfit = calculatePercentProfit(transaction);
         this.usdProfit = calculateUsdProfit(transaction);
     }
 
-    private Double calculateEquivalentPerCoin(Transaction transaction, Currency currency) {
-        Double converted = convertToCurrency(transaction.getPurchased(), transaction.getSnapshotPrice(), currency);
-        return divide(converted, transaction.getPurchased().getAmount());
+    private Double calculateBtcEquivalentPerCoin(Transaction transaction) {
+        Money converted = convertToCurrency(transaction.getPurchased(), transaction.getSnapshotPrice(), Currency.BTC);
+
+        //???
+        return divide(converted.getAmount(), transaction.getPurchased().getAmount());
     }
 
-    private Double calculateTotalCurrencyPaid(Transaction transaction, Currency currency) {
-        return convertToCurrency(transaction.getSold(), transaction.getSnapshotPrice(), currency);
+    private Double calculateUsdEquivalentPerCoin(Transaction transaction) {
+        Money converted = convertToCurrency(transaction.getPurchased(), transaction.getSnapshotPrice(), Currency.USD);
+
+        //???
+        return divide(converted.getAmount(), transaction.getPurchased().getAmount());
+    }
+
+    private Double calculateTotalBtcPaid(Transaction transaction) {
+        return convertToCurrency(transaction.getSold(), transaction.getSnapshotPrice(), Currency.BTC).getAmount();
+    }
+
+    private Double calculateTotalUsdPaid(Transaction transaction) {
+        return convertToCurrency(transaction.getSold(), transaction.getSnapshotPrice(), Currency.USD).getAmount();
     }
 
     private Double calculatePercentProfit(Transaction transaction) {
-        return 0D;
+        Double amount = transaction.getPurchased().getCurrency().equals(Currency.USD) ? transaction.getSold().getAmount() : transaction.getPurchased().getAmount();
+        Double currentValue = multiply(getCurrentBtcPriceInUsd().getAmount(), amount);
+        Double decimal = divide(currentValue, getTotalUsdPaid()) - 1;
+        return multiply(decimal, 100.);
     }
 
     private Double calculateUsdProfit(Transaction transaction) {
-        return 0D;
+        Double currentValue = multiply(getCurrentBtcPriceInUsd().getAmount(), transaction.getPurchased().getAmount());
+        return currentValue - getTotalUsdPaid();
     }
 
-    private Double convertToCurrency(Money original, Money snapshotPrice, Currency newCurrency) {
+    private Money convertToCurrency(Money original, Money snapshotPrice, Currency newCurrency) {
         if (original.getCurrency().equals(newCurrency)) {
-            return original.getAmount();
+            return new Money(original.getCurrency(), original.getAmount());
         }
 
         if (snapshotPrice.getCurrency().equals(newCurrency)) {
-            return divide(original.getAmount(), snapshotPrice.getAmount());
+            return new Money(newCurrency, divide(original.getAmount(), snapshotPrice.getAmount()));
         }
 
-//        if (originalCurrency.equals(Currency.USD)) {
-            return multiply(original.getAmount(), snapshotPrice.getAmount());
-
+        return new Money(newCurrency, multiply(original.getAmount(), snapshotPrice.getAmount()));
     }
 
-    private Double getCurrentBtcPrice() {
-        return 17000.;
+    private Money getCurrentBtcPriceInUsd() {
+        return new Money(Currency.BTC, 20000.);
     }
 
     private Double multiply(Double a, Double b) {
         BigDecimal x = new BigDecimal(a);
         BigDecimal y = new BigDecimal(b);
-        return x.multiply(y).doubleValue();
+        return x.multiply(y).setScale(8, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 
     private Double divide(Double a, Double b) {
         BigDecimal x = new BigDecimal(a);
         BigDecimal y = new BigDecimal(b);
-        return x.divide(y, 8, BigDecimal.ROUND_UP).doubleValue();
+        return x.divide(y, 8, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 }
