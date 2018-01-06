@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 @ToString
 public class TransactionMetrics {
 
+    Transaction transaction;
     Double usdEquivalentPerPurchasedCoin;
     Double btcEquivalentPerPurchasedCoin;
     Double totalUsdPaid;
@@ -19,44 +20,51 @@ public class TransactionMetrics {
     Double usdProfit;
 
     public TransactionMetrics(Transaction transaction) {
-        this.btcEquivalentPerPurchasedCoin = calculateBtcEquivalentPerCoin(transaction);
-        this.usdEquivalentPerPurchasedCoin = calculateUsdEquivalentPerCoin(transaction);
-        this.totalBtcPaid = calculateTotalBtcPaid(transaction);
-        this.totalUsdPaid = calculateTotalUsdPaid(transaction);
-        this.percentProfit = calculatePercentProfit(transaction);
-        this.usdProfit = calculateUsdProfit(transaction);
+        this.transaction = transaction;
+        this.btcEquivalentPerPurchasedCoin = calculateBtcEquivalentPerPurchasedCoin();
+        this.usdEquivalentPerPurchasedCoin = calculateUsdEquivalentPerPurchasedCoin();
+        this.totalBtcPaid = calculateTotalBtcPaid();
+        this.totalUsdPaid = calculateTotalUsdPaid();
+        this.percentProfit = calculatePercentProfit();
+        this.usdProfit = calculateUsdProfit();
     }
 
-    private Double calculateBtcEquivalentPerCoin(Transaction transaction) {
-        Money converted = convertToCurrency(transaction.getPurchased(), transaction.getSnapshotPrice(), Currency.BTC);
-
-        //???
-        return divide(converted.getAmount(), transaction.getPurchased().getAmount());
+    private Double calculateBtcEquivalentPerPurchasedCoin() {
+        if (transaction.getPurchased().getCurrency().equals(Currency.BTC)) {
+            return divide(transaction.getPurchased().getAmount(), transaction.getSold().getAmount());
+        } else if (transaction.getSold().getCurrency().equals(Currency.BTC)) {
+            return divide(transaction.getSold().getAmount(), transaction.getPurchased().getAmount());
+        } else if (transaction.getPurchased().getCurrency().equals(Currency.USD)) {
+            return divide(transaction.getPurchased().getAmount(), multiply(transaction.getSold().getAmount(), getCurrentBtcPriceInUsd().getAmount()));
+        } else if (transaction.getSold().getCurrency().equals(Currency.USD)) {
+            return divide(transaction.getSold().getAmount(), multiply(transaction.getPurchased().getAmount(), getCurrentBtcPriceInUsd().getAmount()));
+        }
+        return 0.;
     }
 
-    private Double calculateUsdEquivalentPerCoin(Transaction transaction) {
+    private Double calculateUsdEquivalentPerPurchasedCoin() {
         Money converted = convertToCurrency(transaction.getPurchased(), transaction.getSnapshotPrice(), Currency.USD);
 
         //???
         return divide(converted.getAmount(), transaction.getPurchased().getAmount());
     }
 
-    private Double calculateTotalBtcPaid(Transaction transaction) {
+    private Double calculateTotalBtcPaid() {
         return convertToCurrency(transaction.getSold(), transaction.getSnapshotPrice(), Currency.BTC).getAmount();
     }
 
-    private Double calculateTotalUsdPaid(Transaction transaction) {
+    private Double calculateTotalUsdPaid() {
         return convertToCurrency(transaction.getSold(), transaction.getSnapshotPrice(), Currency.USD).getAmount();
     }
 
-    private Double calculatePercentProfit(Transaction transaction) {
+    private Double calculatePercentProfit() {
         Double amount = transaction.getPurchased().getCurrency().equals(Currency.USD) ? transaction.getSold().getAmount() : transaction.getPurchased().getAmount();
         Double currentValue = multiply(getCurrentBtcPriceInUsd().getAmount(), amount);
         Double decimal = divide(currentValue, getTotalUsdPaid()) - 1;
         return multiply(decimal, 100.);
     }
 
-    private Double calculateUsdProfit(Transaction transaction) {
+    private Double calculateUsdProfit() {
         Double currentValue = multiply(getCurrentBtcPriceInUsd().getAmount(), transaction.getPurchased().getAmount());
         return currentValue - getTotalUsdPaid();
     }

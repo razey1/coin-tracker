@@ -15,7 +15,7 @@ public class TransactionMetricsTest {
         TransactionMetrics metrics = new TransactionMetrics(transaction);
 
 //        assertThat(metrics.getBtcEquivalentPerCoin()).isEqualTo(1.);
-        System.out.println(transaction);
+//        System.out.println(transaction);
         System.out.println(metrics);
         System.out.println();
     }
@@ -23,21 +23,27 @@ public class TransactionMetricsTest {
     @DataProvider
     private Object[][] transactionDataProvider() {
         Transaction btcUsdBtc = Transaction.builder()
-                .purchased(new Money(Currency.BTC, 1.5))
-                .sold(new Money(Currency.USD, 22500.))
-                .snapshotPrice(new Money(Currency.BTC, 15000.))
+                .purchased(new Money(Currency.BTC, 0.00831050))
+                .sold(new Money(Currency.USD, 144.24))
+                .snapshotPrice(new Money(Currency.BTC, 17356.36))
                 .build();
 
-        Transaction usdBtcBtc = Transaction.builder()
-                .purchased(new Money(Currency.USD, 22500.))
-                .sold(new Money(Currency.BTC, 1.5))
-                .snapshotPrice(new Money(Currency.BTC, 15000.))
+        Transaction xrbBtcBtc = Transaction.builder()
+                .purchased(new Money(Currency.XRB, 43.37220000))
+                .sold(new Money(Currency.BTC, 0.04838429))
+                .snapshotPrice(new Money(Currency.BTC, 14913.35))
                 .build();
+//
+//        Transaction xrbBtcBtc = Transaction.builder()
+//                .purchased(new Money(Currency.XRB, 43.37220000))
+//                .sold(new Money(Currency.BTC, 0.04838429))
+//                .snapshotPrice(new Money(Currency.BTC, 14913.35))
+//                .build();
 
 
         return new Object[][]{
                 {btcUsdBtc},
-                {usdBtcBtc}};
+                {xrbBtcBtc}};
 
     }
 }
